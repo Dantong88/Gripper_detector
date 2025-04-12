@@ -1,0 +1,23 @@
+_BASE_: "./Base-RCNN-FPN.yaml"
+MODEL:
+  WEIGHTS: "/home/niudt/robotic_project/detectron2/tools/bimanual_detector_40epoch/model_final.pth"#"/home/niudt/robotic_project/detectron2/tools/bimanual_detector_40epoch/model_final_280758.pkl"#"detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: False
+  RESNETS:
+    DEPTH: 50
+#SOLVER:
+#  STEPS: (210000, 250000)
+#  MAX_ITER: 270000
+  ROI_HEADS:
+    NUM_CLASSES: 7
+
+SOLVER:
+  IMS_PER_BATCH: 16
+  BASE_LR: 0.002
+  STEPS: (1073, 1283)
+  MAX_ITER: 1400
+
+DATASETS:
+  TRAIN: ("7_cubes",)
+  TEST: ("coco_2017_val",)
+
+OUTPUT_DIR: ./bimanual_detector_40epoch

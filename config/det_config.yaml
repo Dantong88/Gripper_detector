@@ -4,7 +4,7 @@ MODEL:
   WEIGHTS: 'ckpt/model_final.pth'
   MASK_ON: False
   RESNETS:
-    DEPTH: 101
+    DEPTH: 50
 #SOLVER:
 #  STEPS: (210000, 250000)
 #  MAX_ITER: 270000
