@@ -2,6 +2,7 @@ import argparse
 import argparse
 import logging
 import os
+import shutil
 from collections import OrderedDict
 import joblib
 import torch
@@ -81,11 +82,11 @@ class BatchPredictor(nn.Module):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='inference of end-effector detector')
     parser.add_argument('--config_file', type=str,
-                        default='config/3dprint_config.yaml')
+                        default='config/redmug_config.yaml')
     # parser.add_argument('--ckpt', type=str,
     #                     default='/home/niudt/robotic_project/detectron2/tools/lego_40epoch/model_final.pth')
     parser.add_argument('--ckpt', type=str,
-                        default='/home/niudt/robotic_project/detectron2/tools/3d_print_40epoch/model_final.pth')
+                        default='/home/niudt/robotic_project/detectron2/tools/redmug_40epoch/model_final.pth')
     parser.add_argument('--device', type=str,
                         default='cpu')
     parser.add_argument('--input_img', type=str,
@@ -112,7 +113,10 @@ if __name__ == '__main__':
         os.path.join('/datasets/lvma/current/lego/data/franka/pkl/*', '*'))
     # demos = ['/scratch/partial_datasets/lvma/lego_project/data/pkl_adapted/ball/16/02-09-2025/2025-02-09T21:55:34.849549']
     # get detection box
+
+    invalid_demos = []
     for demo in tqdm(demos):
+        invalid_demo = False
         bbox_det = {}
         for view in ['rgb_left.png', 'rgb_right.png', 'rgb_wrist.png']:
             input_img = os.path.join(demo, 'first_frames', view)
@@ -121,31 +125,33 @@ if __name__ == '__main__':
             image_cv2 = cv2.imread(input_img) # Convert from RGB to BGR to align with the image format in OpenCV
             det_pred = predictor([image_cv2])
 
-            if len(det_pred) != 0:
+            try:
                 bbox = det_pred[0]['instances'].pred_boxes.tensor.detach().numpy()[0]
-                bbox = [round(i) for i in bbox]
-                bbox_det[view] = bbox
-
-
-            else:
+            except:
                 print('no detected boxes in ', demo)
+                invalid_demos.append(demo)
+                invalid_demo = True
+                break
+            bbox = [round(i) for i in bbox]
+            bbox_det[view] = bbox
+
 
 
         # write the pkl
-        pkls = glob(os.path.join(demo, '*'))
+        if not invalid_demo:
+            pkls = glob(os.path.join(demo, '*'))
 
-        for pkl in pkls:
-            if not pkl.endswith('.pkl'):  # More robust check for '.pkl' files
-                continue
-            with open(pkl, "rb") as f:
-                data = joblib.load(f)  # Load the dictionary
+            for pkl in pkls:
+                if not pkl.endswith('.pkl'):  # More robust check for '.pkl' files
+                    continue
+                with open(pkl, "rb") as f:
+                    data = joblib.load(f)  # Load the dictionary
 
-            for key in list(data.keys()):
-                if 'bbox' in key:
-                    del data[key]
+                for key in list(data.keys()):
+                    if 'bbox' in key:
+                        del data[key]
 
-            # Ensure bbox_det has the required keys before updating `data`
-            if 'rgb_left.png' in bbox_det and 'rgb_right.png' in bbox_det and 'rgb_wrist.png' in bbox_det:
+                # Ensure bbox_det has the required keys before updating `data`
                 data['bbox_left'] = bbox_det['rgb_left.png']
                 data['bbox_right'] = bbox_det['rgb_right.png']
                 data['bbox_wrist'] = bbox_det['rgb_wrist.png']
@@ -153,8 +159,10 @@ if __name__ == '__main__':
                 # Save the updated dictionary
                 with open(pkl, "wb") as f:
                     joblib.dump(data, f)
-            else:
-                print(f"Warning: Missing keys in bbox_det for file {pkl}")
+
+    # remove the invalid demo
+    for invalid_demo_path in invalid_demos:
+        shutil.rmtree(invalid_demo_path)
 
 
 

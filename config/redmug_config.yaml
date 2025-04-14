@@ -1,0 +1,23 @@
+_BASE_: "./Base-RCNN-FPN.yaml"
+MODEL:
+  WEIGHTS: '/home/niudt/robotic_project/detectron2/tools/redmug_40epoch/model_final.pth'
+  MASK_ON: False
+  RESNETS:
+    DEPTH: 50
+#SOLVER:
+#  STEPS: (210000, 250000)
+#  MAX_ITER: 270000
+  ROI_HEADS:
+    NUM_CLASSES: 1
+
+SOLVER:
+  IMS_PER_BATCH: 16
+  BASE_LR: 0.002
+  STEPS: (4600, 5500)
+  MAX_ITER: 6000
+
+DATASETS:
+  TRAIN: ("redmug",)
+  TEST: ("coco_2017_val",)
+
+OUTPUT_DIR: ./3d_print_40epoch
