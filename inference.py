@@ -86,17 +86,17 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str,
                         default='cpu')
     parser.add_argument('--input_img', type=str,
-                        default='assets/berkeley_rpt.jpg')
+                        default='assets/bc_z.jpg')
     parser.add_argument('--save_path', type=str,
                         default='assets')
     parser.add_argument('--conf_thresh', type=float,
-                        default=0.5)
+                        default=0.9)
 
     args = parser.parse_args()
 
     cfg = get_cfg()
     cfg.merge_from_file(args.config_file)
-    cfg.MODEL.WEIGHTS = args.ckpt  # add model weight here
+    # cfg.MODEL.WEIGHTS = args.ckpt  # add model weight here
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = args.conf_thresh  # 0.5 , set the testing threshold for this model
     predictor = BatchPredictor(cfg).to(args.device)
     supported_objs = {0: {'id': 1, 'name': 'gripper', 'color': [220, 20, 60], 'isthing': 1}}
